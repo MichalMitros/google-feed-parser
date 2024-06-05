@@ -12,8 +12,7 @@ services:
       RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672"
       DATABASE_URL: "postgresql://local:local@postgres/postgres?sslmode=disable"
     command: >
-        sh -c 'goose -dir migrations postgres $${DATABASE_URL} up && sleep 2 &&
-               exec reflex -r "\.go$$" -s -- sh -c "go run ./cmd/parserd"'
+        sh -c 'exec reflex -r "\.go$$" -s -- sh -c "go run ./cmd/parserd"'
     volumes:
       - .:/go/src/app
       - go-cache:/.go-cache
@@ -21,7 +20,27 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
       rabbitmq:
+        condition: service_healthy
+    networks:
+      - lab
+  
+  migrator:
+    container_name: migrator
+    build:
+      context: .
+      dockerfile: migrator.Dockerfile
+    environment:
+      DATABASE_URL: "postgresql://local:local@postgres/postgres?sslmode=disable"
+    command: >
+        sh -c 'goose -dir migrations postgres $${DATABASE_URL} up && sleep 2'
+    volumes:
+      - .:/go/src/app
+      - go-cache:/.go-cache
+    depends_on:
+      postgres:
         condition: service_healthy
     networks:
       - lab
