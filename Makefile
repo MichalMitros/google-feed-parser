@@ -35,11 +35,15 @@ infra:             ## runs infrastructure (rabbitmq, postgres)
 # testing
 
 .PHONY: test
-test: unit ## run all tests
+test: unit integration ## run all tests
 
 .PHONY: unit
 unit:              ## run unit tests
 	@docker compose run --rm google-feed-parser go test -race -count=1 -run Unit ./...
+
+.PHONY: integration
+integration:       ## run integration tests
+	@docker compose run --rm google-feed-parser sh -c 'goose -dir $(migrations_dir) postgres $${DATABASE_URL} up && go test -race -count=1 -run Integration ./...'
 
 # migrations
 
@@ -79,6 +83,13 @@ install-goose:     ## install goose@v3.20.0 for managing migrations
 generate: infra     ## generate all the mocks and models for the project
 	@@go generate ./...
 
+.PHONY: generate-db
+generate-db: infra ## generate golang models from database
+	@dns="postgresql://$(local_db_creds)@$(local_db_addr)/postgres?sslmode=disable"; \
+	path="./internal/platform/storage/gen"; \
+	goose_table_name="goose_db_version"; \
+	jet -dsn=$$dns -ignore-tables=$$goose_table_name -path=$$path
+
 # Linters and formatters
 
 .PHONY: golangci
@@ -100,3 +111,9 @@ format:            ## format golang code using gofumpt
 		-w /src \
 		$$img_tag gofumpt -l -w .; \
 	echo "done"
+
+# jet 
+
+.PHONY: install-jet
+install-jet:       ## install jet v2.11.1 for generating models from DB schema.
+	@go install github.com/go-jet/jet/v2/cmd/jet@v2.11.1
