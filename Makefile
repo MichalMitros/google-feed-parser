@@ -32,6 +32,15 @@ infra:             ## runs infrastructure (rabbitmq, postgres)
 	sleep 2 && \
 	goose -dir $(migrations_dir) postgres "postgres://$(local_db_creds)@$(local_db_addr)/postgres?sslmode=disable" up
 
+# testing
+
+.PHONY: test
+test: unit ## run all tests
+
+.PHONY: unit
+unit:              ## run unit tests
+	@docker compose run --rm google-feed-parser go test -race -count=1 -run Unit ./...
+
 # migrations
 
 .PHONY: new-migration
@@ -63,6 +72,12 @@ migrations-validate: ## check migration files without running them
 .PHONY: install-goose
 install-goose:     ## install goose@v3.20.0 for managing migrations
 	@go install github.com/pressly/goose/v3/cmd/goose@v3.20.0
+
+# code generation
+
+.PHONY: generate
+generate: infra     ## generate all the mocks and models for the project
+	@@go generate ./...
 
 # Linters and formatters
 
