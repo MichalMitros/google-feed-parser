@@ -9,6 +9,7 @@ concurrency:
 jobs:
   unit:
     name: unit
+    needs: [golangci, migrations]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -17,6 +18,7 @@ jobs:
         run: docker compose run --rm google-feed-parser go test -race -count=1 -run Unit ./...
   integration:
     name: integration
+    needs: [golangci, migrations]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
