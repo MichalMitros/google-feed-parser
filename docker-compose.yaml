@@ -1,0 +1,68 @@
+version: "3.8"
+services:
+  google-feed-parser:
+    container_name: google-feed-parser
+    build:
+      context: .
+      target: builder
+    environment:
+      GOCACHE: "/.go-cache"
+      GOMODCACHE: "/.go-mod-cache"
+      ENVIRONMENT: "local"
+      RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672"
+      DATABASE_URL: "postgresql://local:local@postgres/postgres?sslmode=disable"
+    command: >
+        sh -c 'goose -dir migrations postgres $${DATABASE_URL} up && sleep 2 &&
+               exec reflex -r "\.go$$" -s -- sh -c "go run ./cmd/parserd"'
+    volumes:
+      - .:/go/src/app
+      - go-cache:/.go-cache
+      - go-mod-cache:/.go-mod-cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - lab
+
+  postgres:
+    image: 'postgres:13'
+    container_name: postgres
+    environment:
+      POSTGRES_PASSWORD: local
+      POSTGRES_USER: local
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U local"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - lab
+    ports:
+      - "15432:5432"
+
+  rabbitmq:
+    image: rabbitmq:3.10.10-management
+    hostname: 'rabbit'
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 15s
+      timeout: 15s
+      retries: 3
+    volumes:
+      - "gfp-rabbitmq-data:/var/lib/rabbitmq/mnesia/"
+    networks:
+      - lab
+
+networks:
+  lab:
+
+volumes:
+  go-cache:
+  go-mod-cache:
+  gfp-rabbitmq-data:

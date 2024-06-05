@@ -1,0 +1,90 @@
+# Options for analysis running.
+run:
+  # Timeout for analysis, e.g. 30s, 5m.
+  # Default: 1m
+  timeout: 5m
+
+linters:
+  # Enable additional linters
+  enable:
+    - gocritic
+    - stylecheck
+    - staticcheck
+    - bodyclose
+    - cyclop
+    - thelper
+    - testifylint
+    - nestif
+    - varnamelen # Check variables names.
+    - errname # Check errors names.
+    - exportloopref # Check if there are no pointers to enclosing loop variables.
+    - gochecknoglobals # Check that no global variables exist.
+    - goerr113 # Linter for checking errors handling expressions.
+    - promlinter # Check Prometheus metrics naming via promlint.
+    - revive # Go code linter.
+    - errorlint # Find problematic error wrapping.
+    - copyloopvar # Find copied loop variables (not necessary since Go 1.22+).
+    - zerologlint # zerolog linter.
+    - testifylint # testify linter.
+    - lll # Detects long lines.
+    - dupl # Finds code duplicities.
+    - funlen # Detects long functions.
+    - gofumpt # Checks if code was formatted with gofumpt.
+    - misspell # Finds misspelled English words.
+    
+
+linters-settings:
+  varnamelen:
+    # Optional list of variable names that should be ignored completely.
+    # Default: []
+    ignore-names:
+      - err
+      - tx
+      - id
+      - ok
+      - tt
+      - db
+      - fn
+    # Optional list of variable declarations that should be ignored completely.
+    # Entries must be in one of the following forms (see below for examples):
+    # - for variables, parameters, named return values, method receivers, or type parameters:
+    #   <name> <type>  (<type> can also be a pointer/slice/map/chan/...)
+    # - for constants: const <name>
+    #
+    # Default: []
+    ignore-decls:
+      - t testing.T
+      - e error
+      - i int
+      - j int
+      - ix int
+      - wg sync.WaitGroup
+      - eg errgroup.Group
+      - db *sql.DB
+  revive:
+    severity: error
+    ignore-generated-header: true # ignores files with "GENERATED" header
+    rules:
+      - name: exported # Exported function and methods should have comments
+        disabled: false
+        arguments:
+          - "checkPrivateReceivers" # enables checking public methods of private types
+
+issues:
+  # Fix found issues (if it's supported by the linter).
+  fix: false
+  # Excluding configuration per-path, per-linter, per-text and per-source
+  exclude-rules:
+    # Exclude some linters from running on tests files.
+    - path: _test\.go
+      linters:
+        - errcheck
+        - goerr113
+        - gochecknoglobals
+        - funlen
+    # Exclude some linters from running main.go file.
+    - path: main.go
+      linters:
+        - funlen
+  include:
+    - EXC0012 # include back that exported stuff should have comment
