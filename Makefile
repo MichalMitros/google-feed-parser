@@ -27,10 +27,8 @@ run:               ## runs google-feed-parser and all necessary components
 	@docker compose up --build google-feed-parser
 
 .PHONY: infra
-infra:             ## runs infrastructure (rabbitmq, postgres)
-	@docker compose up -d rabbitmq -d postgres && \
-	sleep 2 && \
-	goose -dir $(migrations_dir) postgres "postgres://$(local_db_creds)@$(local_db_addr)/postgres?sslmode=disable" up
+infra:             ## runs infrastructure (rabbitmq, postgres) and migrations
+	@docker compose up -d rabbitmq -d postgres -d migrator
 
 # testing
 
@@ -43,7 +41,7 @@ unit:              ## run unit tests
 
 .PHONY: integration
 integration:       ## run integration tests
-	@docker compose run --rm google-feed-parser sh -c 'goose -dir $(migrations_dir) postgres $${DATABASE_URL} up && go test -race -count=1 -run Integration ./...'
+	@docker compose run --rm google-feed-parser go test -race -count=1 -run Integration ./...
 
 # migrations
 
@@ -55,27 +53,23 @@ new-migration:     ## create new migration
 
 .PHONY: migration-up
 migration-up:      ## migrate the DB to the most recent version available
-	@goose -dir $(migrations_dir) postgres "postgres://$(local_db_creds)@$(local_db_addr)/postgres?sslmode=disable" up
+	@docker compose run --rm migrator sh -c 'goose -dir $(migrations_dir) postgres $${DATABASE_URL} up'
 
 .PHONY: migration-down
 migration-down:    ## rollback the version by 1
-	@goose -dir $(migrations_dir) postgres "postgres://$(local_db_creds)@$(local_db_addr)/postgres?sslmode=disable" down
+	@docker compose run --rm migrator sh -c 'goose -dir $(migrations_dir) postgres $${DATABASE_URL} down'
 
-.PHONY: migrations-reset
-migrations-reset:  ## rollback all migrations
-	@goose -dir $(migrations_dir) postgres "postgres://$(local_db_creds)@$(local_db_addr)/postgres?sslmode=disable" reset
+.PHONY: migration-reset
+migration-reset:  ## rollback all migrations
+	@docker compose run --rm migrator sh -c 'goose -dir $(migrations_dir) postgres $${DATABASE_URL} reset'
 
 .PHONY: migrations-validate
-migrations-validate: ## check migration files without running them
-	@if ! goose -dir $(migrations_dir) validate; then \
+migration-validate: ## check migration files without running them
+	@if ! docker compose run --rm migrator sh -c 'goose -dir $(migrations_dir) validate'; then \
 		exit 1; \
 	else \
 		echo "all migration files are valid"; \
 	fi;
-
-.PHONY: install-goose
-install-goose:     ## install goose@v3.20.0 for managing migrations
-	@go install github.com/pressly/goose/v3/cmd/goose@v3.20.0
 
 # code generation
 

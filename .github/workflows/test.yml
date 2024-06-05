@@ -1,0 +1,25 @@
+name: test
+
+on: [push]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: unit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: unit
+        run: docker compose run --rm google-feed-parser go test -race -count=1 -run Unit ./...
+  integration:
+    name: integration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: integration
+        run: docker compose run --rm google-feed-parser go test -race -count=1 -run Integration ./...
