@@ -1,4 +1,4 @@
-name: golangci
+name: lint
 
 on: [push]
 
@@ -8,7 +8,7 @@ concurrency:
 
 jobs:
   golangci:
-    name: lint
+    name: golangci
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -22,3 +22,11 @@ jobs:
           version: v1.57.2
           github-token: ${{ secrets.GITHUB_TOKEN }}
           args: --timeout=5m --verbose
+  migrations:
+    name: validate-migrations
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: validate
+        run: docker compose run --rm migrator sh -c 'goose -dir migrations validate'
