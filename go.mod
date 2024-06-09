@@ -3,6 +3,7 @@ module github.com/MichalMitros/google-feed-parser
 go 1.22.2
 
 require (
+	github.com/caarlos0/env/v6 v6.10.1
 	github.com/go-faker/faker/v4 v4.4.1
 	github.com/go-jet/jet/v2 v2.11.1
 	github.com/google/uuid v1.6.0
@@ -15,7 +16,6 @@ require (
 )
 
 require (
-	github.com/caarlos0/env/v6 v6.10.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
