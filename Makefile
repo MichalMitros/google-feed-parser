@@ -33,7 +33,7 @@ infra:             ## runs infrastructure (rabbitmq, postgres) and migrations
 # testing
 
 .PHONY: test
-test: unit integration ## run all tests
+test: unit integration e2e ## run all tests
 
 .PHONY: unit
 unit:              ## run unit tests
@@ -42,6 +42,10 @@ unit:              ## run unit tests
 .PHONY: integration
 integration:       ## run integration tests
 	@docker compose run --rm google-feed-parser go test -race -count=1 -run Integration ./...
+
+.PHONY: e2e
+e2e:               ## run e2e tests
+	@docker compose run --rm google-feed-parser go test -tags e2e -race -count=1 ./e2e
 
 # migrations
 
@@ -53,19 +57,19 @@ new-migration:     ## create new migration
 
 .PHONY: migration-up
 migration-up:      ## migrate the DB to the most recent version available
-	@docker compose run --rm migrator sh -c 'goose -dir $(migrations_dir) postgres $${DATABASE_URL} up'
+	@docker compose run --rm migrator goose -dir $(migrations_dir) postgres $${DATABASE_URL} up
 
 .PHONY: migration-down
 migration-down:    ## rollback the version by 1
-	@docker compose run --rm migrator sh -c 'goose -dir $(migrations_dir) postgres $${DATABASE_URL} down'
+	@docker compose run --rm migrator goose -dir $(migrations_dir) postgres $${DATABASE_URL} down
 
 .PHONY: migration-reset
 migration-reset:  ## rollback all migrations
-	@docker compose run --rm migrator sh -c 'goose -dir $(migrations_dir) postgres $${DATABASE_URL} reset'
+	@docker compose run --rm migrator goose -dir $(migrations_dir) postgres $${DATABASE_URL} reset
 
 .PHONY: migrations-validate
 migration-validate: ## check migration files without running them
-	@if ! docker compose run --rm migrator sh -c 'goose -dir $(migrations_dir) validate'; then \
+	@if ! docker compose run --rm migrator goose -dir $(migrations_dir) validate; then \
 		exit 1; \
 	else \
 		echo "all migration files are valid"; \
