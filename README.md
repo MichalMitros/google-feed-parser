@@ -13,8 +13,7 @@ If the same shop is parsed second time, its products are updated - products from
 Requirements:
 - Makefile
 - Docker + docker-compose
-- go (preferably 1.22.2, required to install goose)
-- [goose](https://github.com/pressly/goose) (can be installed with `make install-goose`)
+- go (preferably 1.22.2, only required if you want to generate db-models)
 
 To run the service, clone the repository and run:
 ```sh
@@ -89,18 +88,8 @@ Basic components of the service are:
 - Storage - handles storing data (Postgres in this case)
 - Parser - uses Fetcher, Decoder and Storage to parse feed file into products in database
 
-```dot
-digraph components {
-    Parser -> Fetcher [label="url"];
-    Fetcher -> Parser [label="xml"];
-    Parser -> Decoder [label="xml"];
-    Decoder -> Parser [label="products"];
-    Parser -> Storage [label="shop,run,products"];
-    Storage -> Parser [label="statistics"];
 
-    { rank=same; Parser Storage }
-}
-```
+![docs/graphs/images/components.svg](/docs/graphs/images/components.svg)
 
 ## Database
 
@@ -118,27 +107,7 @@ password: local
 ```
 
 Database schema:
-```dot
-digraph schema {
-    rankdir = "UD";
-    node[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"><TR><TD colspan="2">product</TD></TR>[<TR><TD>id</TD><TD>integer</TD></TR> <TR><TD>shop_id</TD><TD>integer</TD></TR> <TR><TD>version</TD><TD>integer</TD></TR> <TR><TD>...</TD><TD>...</TD></TR> <TR><TD>created_at</TD><TD>timestamp with time zone</TD></TR> <TR><TD>deleted_at</TD><TD>timestamp with time zone</TD></TR>]</TABLE>>,shape=plaintext] product;
-
-	node[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"><TR><TD colspan="2">shipping</TD></TR>[<TR><TD>id</TD><TD>integer</TD></TR> <TR><TD>product_id</TD><TD>integer</TD></TR> <TR><TD>...</TD><TD>...</TD></TR>]</TABLE>>,shape=plaintext] shipping;
-
-	node[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"><TR><TD colspan="2">shop</TD></TR>[<TR><TD>id</TD><TD>integer</TD></TR> <TR><TD>url</TD><TD>varchar</TD></TR> <TR><TD>created_at</TD><TD>timestamp with time zone</TD></TR>]</TABLE>>,shape=plaintext] shop;
-
-	node[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"><TR><TD colspan="2">run</TD></TR>[<TR><TD>id</TD><TD>integer</TD></TR><TR><TD>shop_id</TD><TD>integer</TD></TR> <TR><TD>created_at</TD><TD>timestamp with time zone</TD></TR> <TR><TD>finished_at</TD><TD>timestamp with time zone</TD></TR> <TR><TD>products_version</TD><TD>integer</TD></TR><TR><TD>created_products</TD><TD>integer</TD></TR><TR><TD>updated_products</TD><TD>integer</TD></TR><TR><TD>deleted_products</TD><TD>integer</TD></TR><TR><TD>failed_products</TD><TD>integer</TD></TR><TR><TD>success</TD><TD>boolean</TD></TR><TR><TD>status_message</TD><TD>varchar</TD></TR>]</TABLE>>,shape=plaintext] run;
-
-    { edge[dir=back]
-      shop -> product;
-      shop -> run;
-    }
-    shipping -> product;
-
-    { rank=same; shipping shop }
-    { rank=same; product run }
-}
-```
+![docs/graphs/images/db-schema.svg](/docs/graphs/images/db-schema.svg)
 
 ## Deployment
 
