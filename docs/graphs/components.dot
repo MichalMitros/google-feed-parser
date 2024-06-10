@@ -1,0 +1,10 @@
+digraph components {
+    Parser -> Fetcher [label="url"];
+    Fetcher -> Parser [label="xml"];
+    Parser -> Decoder [label="xml"];
+    Decoder -> Parser [label="products"];
+    Parser -> Storage [label="shop,run,products"];
+    Storage -> Parser [label="statistics"];
+
+    { rank=same; Parser Storage }
+}
