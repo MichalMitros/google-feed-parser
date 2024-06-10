@@ -110,6 +110,13 @@ format:            ## format golang code using gofumpt
 		$$img_tag gofumpt -l -w .; \
 	echo "done"
 
+# docs
+
+.PHONY: graphs
+graphs:            ## rollback all migrations
+	@cat docs/graphs/db-schema.dot | docker run --rm -i nshine/dot dot -Tsvg > docs/graphs/images/db-schema.svg && \
+	cat docs/graphs/components.dot | docker run --rm -i nshine/dot dot -Tsvg > docs/graphs/images/components.svg
+
 # jet 
 
 .PHONY: install-jet
